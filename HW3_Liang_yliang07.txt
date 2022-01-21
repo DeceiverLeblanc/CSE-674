@@ -1,0 +1,146 @@
+//HW3 by Yichen Liang
+//SU Net ID:yliang07      SUID:455360570
+#include <iostream>
+#include<vector>
+#include<fstream>
+using namespace std;
+
+class node {
+public:
+	int id=-1;
+	node* parent=nullptr;
+	int rank=0;
+	node(int id, node* parent, int rank);
+};
+node::node(int id,node* parent,int rank):id(id),parent(parent),rank(rank) {
+}
+class edge {
+public:
+	int n1=-1;
+	int n2=-2;
+	int weight=-1;
+	bool selected=false;
+	edge(int n1, int n2, int weight, bool selected);
+	//Defined needed constructor(s)
+};
+edge::edge(int n1, int n2, int weight, bool selected):n1(n1),n2(n2),weight(weight),selected(selected) {
+}
+
+void Merge(vector<edge>& E, int i1, int i2, int i3, int i4){
+	vector<edge> left;
+	vector<edge> right;
+	for (int i = 0; i < i2-i1+1; i++) {
+		left.push_back(E[i1 + i]);
+	}
+	for (int j= 0; j < i4-i3+1; j++) {
+		right.push_back(E[i3 + j]);
+	}
+	int i = 0; int j = 0; int k = i1;
+	while (i < i2-i1+1 && j < i4 - i3+1) {
+		if (left[i].weight <= right[j].weight) {
+			E[k] = left[i];
+			i++;
+		}
+		else {
+			E[k] = right[j];
+			j++;
+		}
+		k++;
+	}
+	while (i < i2-i1+1) {
+		E[k] = left[i];
+		i++;
+		k++;
+	}
+	while (j < i4-i3+1) {
+		E[k] = right[j];
+		j++;
+		k++;
+	}
+
+}
+//Merge E[i1] ... E[i2] with E[i3] ... E[i4] and store the results in E[i1] ... E[i4]
+
+void MergeSort(vector<edge>& E, int i1, int i2) {
+	if (i1 == i2) return;
+	MergeSort(E, i1, i1 + (i2 - i1) / 2);
+	MergeSort(E, i1 + (i2 - i1) / 2 + 1, i2);
+	Merge(E, i1, i1 + (i2 - i1) / 2, i1 + (i2 - i1) / 2 + 1, i2);
+}
+//Sort E[i1] ... E[i2] and store the results in E[i1] ... E[i2]
+
+void MakeSet(vector<node*>& V){
+	for (int i = 0; i < V.size(); i++) {
+		V[i]->parent = V[i];
+	}
+}//Create the initial disjointed sets
+int Find(vector<node*>& V, int i1) {
+	while (V[i1]->parent != V[i1]->parent->parent) {
+		V[i1]->parent = V[i1]->parent->parent;
+	}
+	int temp = V[i1]->parent->id;
+	return temp;
+}//Find the root id of the tree that contains the node with id = i1 and
+	//perform the needed path compression.
+
+void Union(vector<node*>& V, int i1, int i2){
+	int temp = Find(V,i1);
+	V[temp]->parent = V[i2];
+}
+//Perform a union of the two trees that contain the nodes with id i1 and i2, respectively.
+
+void MST(vector<edge>& E, vector<node*>& V, int Nodes) {
+	for (int i = 0; i < E.size(); i++) {
+		if (Find(V, E[i].n1) == Find(V, E[i].n2)) {
+			E[i].selected = false;
+		}
+		else {
+			Union(V, E[i].n1, E[i].n2);
+			E[i].selected = true;
+		}
+	}
+	cout << "The edges selected are in the following:" << endl;
+	int sum = 0;
+	for (int i = 0; i < E.size(); i++) {
+		if (E[i].selected == true) {
+			cout << E[i].n1 << "  " << E[i].n2 << "  " << E[i].weight << endl;
+			sum += E[i].weight;
+		}
+	}
+	cout << "The total cost:" << sum;
+	}
+	
+	 //Find and print minimum spanning tree using kruskal's algorithm.
+	//Note that you will also create a vector<node *> V as described in class.
+
+int main() {
+	int Nodes;
+	int edges_number;
+	vector<edge>E;
+	vector<node*> V;
+	ifstream graph_txt("graph.txt");
+	graph_txt>>Nodes;
+	graph_txt>>edges_number;
+	int temp1;
+	int temp2;
+	int temp3;
+	int bottle;
+	for (int i = 0; i < edges_number; i++) {
+		graph_txt >> temp1;
+		graph_txt >> temp2;
+		graph_txt >> temp3;
+		edge bottle(temp1, temp2, temp3, false);
+		E.push_back(bottle);
+	}
+	for (int i = 0; i < Nodes; i++) {
+		V.push_back(new node(i, NULL, 0));
+	}
+	MakeSet(V);
+	MergeSort(E, 0, E.size() - 1);
+	MST(E,V,Nodes);//Let Nodes be the number of nodes
+	//Read informaiton from "graph.txt" and create a vector<edge> E.  Each element of E is an edge.
+	//Note that graph.txt does not have source node.
+	//Note that you don't need to duplicate the edges as in HW2 for Prim's algorithm.
+	return 0;
+}
+

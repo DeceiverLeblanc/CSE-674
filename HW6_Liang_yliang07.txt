@@ -1,0 +1,672 @@
+//HW6 by Yichen Liang
+//SU Net ID:yliang07      SUID:455360570
+#include <iostream>
+#include<stack>
+using namespace std;
+
+class node {
+public:
+	node* p_parent;
+	node* p_Lchild;
+	node* p_Rchild;
+	int value;
+	bool color; //true: red, false: black
+	bool is_left_child;
+	bool is_right_child;
+	node() { p_parent = p_Lchild = p_Rchild = nullptr; is_left_child = is_right_child = false; }
+	node(int i) { value = i; p_parent = p_Lchild = p_Rchild = nullptr; is_left_child = is_right_child = false; }
+};
+
+class tree {
+public:
+	node* root;
+	tree() { root = nullptr; }
+	void R_rotate(node* p);//R-rotate at node pointed by p
+	void L_rotate(node* p);//L-rotate at node pointed by p
+	//R_rotate and L_rotate will be called by insert_node, delete_node, delete_1, delete_2A, delete_2B, and delete_3.
+
+	void add_node(int i);//same policy as HW5 for avl trees.
+
+	void delete_node(int i);//same policy as HW5 for avl trees.
+
+
+
+	void delete_1(node* p, bool b);
+	//Case 1 of delete_node; p points to the p_parent of double black node; b is false if double black is the left child of its p_parent; else b is true.
+
+	void delete_2A(node* p, bool b);
+	//Case 2A of delete_node; p points to the p_parent of double black node; b is false if double black is the left child of its p_parent; else b is true.
+
+	void delete_2B(node* p, bool b);
+	//Case 2B of delete_node; p points to the p_parent of double black node; b is false if double black is the left child of its p_parent; else b is true.
+
+
+	void delete_3(node* p, bool b);
+	//Case 3 of delete_node; p points to the p_parent of double black node; b is false if double black is the left child of its p_parent; else b is true.
+
+
+	//For the following, during traveral, print (value, color) of each node.
+	void InorderPrint(node* p);//Print all nodes of a subtree rooted at node pointed by p; Example: (12 R) (7 B) (11 R) ...
+
+};
+
+int main() {
+	tree t1;
+	t1.add_node(10);
+	t1.add_node(18);
+	t1.add_node(7);
+	t1.add_node(15);
+	t1.add_node(16);
+	t1.add_node(30);
+	t1.add_node(25);
+	t1.add_node(40);
+	t1.add_node(60);
+	t1.add_node(2);
+	t1.add_node(1);
+	t1.add_node(70);
+	t1.add_node(56);
+	t1.add_node(64);
+	t1.add_node(22);
+	t1.add_node(23);
+	t1.add_node(14);
+	t1.add_node(16);
+	t1.add_node(13);
+	t1.add_node(5);
+	t1.add_node(6);
+	t1.add_node(13);
+	t1.delete_node(2);
+	t1.delete_node(10);
+	t1.delete_node(23);
+	t1.delete_node(40);
+	t1.delete_node(22);
+	t1.delete_node(25);
+	t1.delete_node(6);
+	t1.delete_node(16);
+	t1.delete_node(14);
+	t1.delete_node(15);
+	t1.delete_node(13);
+	t1.delete_node(64);
+	t1.delete_node(13);
+	t1.delete_node(56);
+	t1.delete_node(16);
+	t1.delete_node(60);
+	t1.delete_node(70);
+	t1.delete_node(7);
+	t1.delete_node(18);
+	t1.delete_node(30);
+	t1.delete_node(1);
+	t1.InorderPrint(t1.root);
+
+}
+
+void tree::R_rotate(node* p) {
+	if (p->p_Lchild->p_Rchild == nullptr && p->p_parent != nullptr) {
+		if (p->is_right_child == true) {
+			p->p_parent->p_Rchild = p->p_Lchild;
+		}
+		if (p->is_left_child == true) {
+			p->p_parent->p_Lchild = p->p_Lchild;
+		}
+		if (p->is_right_child == true) {
+			p->p_Lchild->is_right_child = true;
+			p->p_Lchild->is_left_child = false;
+		}
+		if (p->is_left_child == true) {
+			p->p_Lchild->is_left_child = true;
+			p->p_Lchild->is_right_child = false;
+		}
+		p->p_Lchild->p_parent = p->p_parent;
+		p->p_Lchild->p_Rchild = p;
+		p->p_parent = p->p_Lchild;
+		p->is_left_child = false;
+		p->is_right_child = true;
+		p->p_Lchild = nullptr;
+	}
+	else if (p->p_Lchild->p_Rchild != nullptr && p->p_parent != nullptr) {
+		node temp(1);
+		node* bottle = &temp;
+		if (p->is_right_child == true) p->p_parent->p_Rchild = p->p_Lchild;
+		if (p->is_left_child == true) p->p_parent->p_Lchild = p->p_Lchild;
+
+		if (p->is_right_child == true) {
+			p->p_Lchild->is_right_child = true;
+			p->p_Lchild->is_left_child = false;
+		}
+		if (p->is_left_child == true) {
+			p->p_Lchild->is_left_child = true;
+			p->p_Lchild->is_right_child = false;
+		}
+
+		p->p_Lchild->p_parent = p->p_parent;
+		p->p_parent = p->p_Lchild;
+		bottle->p_Rchild = p->p_Lchild->p_Rchild;
+		p->p_Lchild->p_Rchild = p;
+		p->p_Lchild = bottle->p_Rchild;
+		p->p_Lchild->is_left_child = true;
+		p->p_Lchild->is_right_child = false;
+		p->p_Lchild->p_parent = p;
+		p->is_left_child = false;
+		p->is_right_child = true;
+	}
+
+	else if (p->p_parent == nullptr && p->p_Lchild->p_Rchild == nullptr) {
+		p->p_Lchild->is_left_child = false;
+		p->p_Lchild->is_right_child = false;
+		p->p_Lchild->p_parent = nullptr;
+		p->p_Lchild->p_Rchild = p;
+		p->p_parent = p->p_Lchild;
+		p->is_right_child = true;
+		p->is_left_child = false;
+		p->p_Lchild = nullptr;
+	}
+	else if (p->p_parent == nullptr && p->p_Lchild->p_Rchild != nullptr) {
+		node temp(1);
+		node* bottle = &temp;
+		p->p_Lchild->p_parent = nullptr;
+		p->p_Lchild->is_left_child = false;
+		p->p_Lchild->is_right_child = false;
+		bottle->p_Rchild = p->p_Lchild->p_Rchild;
+		p->p_Lchild->p_Rchild = p;
+		p->p_parent = p->p_Lchild;
+		p->p_Lchild = bottle->p_Rchild;
+		p->p_Lchild->is_left_child = true;
+		p->p_Lchild->is_right_child = false;
+		p->p_Lchild->p_parent = p;
+		p->is_left_child = false;
+		p->is_right_child = true;
+	}
+}
+void tree::L_rotate(node* p) {
+	if (p->p_Rchild->p_Lchild == nullptr && p->p_parent != nullptr) {
+		if (p->is_right_child == true) {
+			p->p_parent->p_Rchild = p->p_Rchild;
+		}
+		if (p->is_left_child == true) {
+			p->p_parent->p_Lchild = p->p_Rchild;
+		}
+		if (p->is_right_child == true) {
+			p->p_Rchild->is_right_child = true;
+			p->p_Rchild->is_left_child = false;
+		}
+		if (p->is_left_child == true) {
+			p->p_Rchild->is_left_child = true;
+			p->p_Rchild->is_right_child = false;
+		}
+		p->p_Rchild->p_parent = p->p_parent;
+		p->p_Rchild->p_Lchild = p;
+		p->p_parent = p->p_Rchild;
+		p->is_left_child = true;
+		p->is_right_child = false;
+		p->p_Rchild = nullptr;
+	}
+	else if (p->p_Rchild->p_Lchild != nullptr && p->p_parent != nullptr) {
+		node temp(1);
+		node* bottle = &temp;
+		if (p->is_right_child == true) p->p_parent->p_Rchild = p->p_Rchild;
+		if (p->is_left_child == true) p->p_parent->p_Lchild = p->p_Rchild;
+		if (p->is_right_child == true) {
+			p->p_Rchild->is_right_child = true;
+			p->p_Rchild->is_left_child = false;
+		}
+		if (p->is_left_child == true) {
+			p->p_Rchild->is_left_child = true;
+			p->p_Rchild->is_right_child = false;
+		}
+		p->p_Rchild->p_parent = p->p_parent;
+		p->p_parent = p->p_Rchild;
+		bottle->p_Rchild = p->p_Rchild->p_Lchild;
+		p->p_Rchild->p_Lchild = p;
+		p->p_Rchild = bottle->p_Rchild;
+		p->p_Rchild->is_right_child = true;
+		p->p_Rchild->is_left_child = false;
+		p->p_Rchild->p_parent = p;
+		p->is_left_child = true;
+		p->is_right_child = false;
+	}
+
+	else if (p->p_parent == nullptr && p->p_Rchild->p_Lchild == nullptr) {
+		p->p_Rchild->is_left_child = false;
+		p->p_Rchild->is_right_child = false;
+		p->p_Rchild->p_parent = nullptr;
+		p->p_Rchild->p_Lchild = p;
+		p->p_parent = p->p_Rchild;
+		p->is_left_child = true;
+		p->is_right_child = false;
+		p->p_Rchild = nullptr;
+	}
+	else if (p->p_parent == nullptr && p->p_Rchild->p_Lchild != nullptr) {
+		node temp(1);
+		node* bottle = &temp;
+		p->p_Rchild->p_parent = nullptr;
+		p->p_Rchild->is_left_child = false;
+		p->p_Rchild->is_right_child = false;
+		bottle->p_Rchild = p->p_Rchild->p_Lchild;
+		p->p_Rchild->p_Lchild = p;
+		p->p_parent = p->p_Rchild;
+		p->p_Rchild = bottle->p_Rchild;
+		p->p_Rchild->is_left_child = false;
+		p->p_Rchild->is_right_child = true;
+		p->p_Rchild->p_parent = p;
+		p->is_left_child = true;
+		p->is_right_child = false;
+	}
+}
+void tree::add_node(int i) {
+	node* new_node = new node(i);
+	new_node->color = true;
+	if (root == nullptr) {
+		root = new_node;
+		root->color = false;
+	}
+	else {
+		if (root->p_Lchild == nullptr && i < root->value) {
+			root->p_Lchild = new_node;
+			new_node->p_parent = root;
+			new_node->is_left_child = true;
+			new_node->is_right_child = false;
+		}
+		else if (root->p_Rchild == nullptr && i > root->value) {
+			root->p_Rchild = new_node;
+			new_node->p_parent = root;
+			new_node->is_left_child = false;
+			new_node->is_right_child = true;
+		}
+		else {
+			node* bottle = root;
+			node* tool = nullptr;
+			while (bottle != nullptr) {
+				if (i >= bottle->value) {
+					tool = bottle;
+					bottle = bottle->p_Rchild;
+				}
+				else if (i < bottle->value) {
+					tool = bottle;
+					bottle = bottle->p_Lchild;
+				}
+			}
+			new_node->p_parent = tool;
+			if (i >= tool->value) {
+				new_node->is_right_child = true;
+				new_node->is_left_child = false;
+				tool->p_Rchild = new_node;
+			}
+			if (i < tool->value) {
+				new_node->is_right_child = false;
+				new_node->is_left_child = true;
+				tool->p_Lchild = new_node;
+			}
+			//start to check the parent's node's color 
+			node* uncle = nullptr;
+			while (new_node!=nullptr) {
+				if (new_node->p_parent->color == true) {//the choice of case1 case2
+					if (new_node->p_parent->is_left_child) uncle = new_node->p_parent->p_parent->p_Rchild;
+					if (new_node->p_parent->is_right_child) uncle = new_node->p_parent->p_parent->p_Lchild;
+					if (uncle!=nullptr&&uncle->color == true) {//case 2
+						new_node->p_parent->color = false;
+						uncle->color = false;
+						uncle->p_parent->color = true;
+						if (uncle->p_parent->p_parent == nullptr) {
+							uncle->p_parent->color = false;
+							break;
+						}
+						else {//treat the grandparent node as newly added node
+							new_node = uncle->p_parent;
+							continue;
+						}
+					}
+					if (uncle==nullptr||uncle->color == false) {//case 1
+						if (new_node->is_right_child == true && new_node->p_parent->is_right_child == true) {//RR pattern
+							new_node->p_parent->p_parent->color = true;
+							new_node->p_parent->color = false;
+							L_rotate(new_node->p_parent->p_parent);
+							break;
+							
+						}
+						else if (new_node->is_left_child == true && new_node->p_parent->is_left_child == true) {//LL pattern
+							new_node->p_parent->p_parent->color = true;
+							new_node->p_parent->color = false;
+							R_rotate(new_node->p_parent->p_parent);
+							break;
+						}
+						else if (new_node->is_left_child == true && new_node->p_parent->is_right_child == true) {//RL pattern
+							new_node->color = false;
+							new_node->p_parent->p_parent->color = true;
+							R_rotate(new_node->p_parent);
+							L_rotate(new_node->p_parent);
+							break;
+						}
+						else if (new_node->is_right_child == true && new_node->p_parent->is_left_child == true) {//LR pattern
+							new_node->color = false;
+							new_node->p_parent->p_parent->color = true;
+							L_rotate(new_node->p_parent);
+							R_rotate(new_node->p_parent);
+							break;
+						}
+					}
+
+				}
+				break;
+			}
+		}
+	}
+	while (root->p_parent != nullptr) {
+		root = root->p_parent;
+	}
+}
+void tree::InorderPrint(node* p) {
+	stack<node*> s;
+	char color = 'R';
+	while (p != nullptr || !s.empty()) {
+		color = 'R';
+		while (p != nullptr) {
+			s.push(p);
+			p = p->p_Lchild;
+		}
+		if (!s.empty()) {
+			p = s.top();
+			if (p->color == false) color = 'B';
+			cout << "(" << p->value << "," << color << ")" << endl;
+			s.pop();
+			p = p->p_Rchild;
+		}
+
+	}
+
+}
+void tree::delete_1(node* p, bool b) {
+	if (b == false) {//R
+		if (p->p_Rchild->p_Rchild!=nullptr&&p->p_Rchild->p_Rchild->color == true) {//RR pattern
+			p->p_Rchild->p_Rchild->color = false;
+			if (p->color == true) {
+				p->color = false;
+				p->p_Rchild->color = true;
+			}
+			if(p->p_Lchild->p_Lchild==nullptr&&p->p_Lchild->p_Rchild==nullptr)p->p_Lchild = nullptr;
+			L_rotate(p);
+		}
+		else if (p->p_Rchild->p_Lchild->color == true) {//RL pattern
+			//p->p_Rchild->p_Lchild->color = false;
+			if (p->color == true) {
+				p->color = false;
+				//p->p_Rchild->color = true;
+			}
+			if (p->p_Lchild->p_Lchild == nullptr && p->p_Lchild->p_Rchild == nullptr)p->p_Lchild = nullptr;
+			R_rotate(p->p_Rchild);
+			L_rotate(p);
+		}
+	}
+
+	if (b == true) {//L
+		if (p->p_Lchild->p_Lchild!=nullptr&&p->p_Lchild->p_Lchild->color == true) {//LL pattern
+			p->p_Lchild->p_Lchild->color = false;
+			if (p->color == true) {
+				p->color = false;
+				p->p_Lchild->color = true;
+			}
+			if (p->p_Rchild->p_Lchild == nullptr && p->p_Rchild->p_Rchild == nullptr)p->p_Rchild = nullptr;
+			R_rotate(p);
+		}
+		else if (p->p_Lchild->p_Rchild->color == true) {//LR pattern
+			//p->p_Lchild->p_Rchild->color = false;
+			if (p->color == true) {
+				p->color = false;
+				//p->p_Lchild->color = true;
+			}
+			if (p->p_Rchild->p_Lchild == nullptr && p->p_Rchild->p_Rchild == nullptr)p->p_Rchild = nullptr;
+			L_rotate(p->p_Lchild);
+			R_rotate(p);
+		}
+	}
+	
+}
+void tree::delete_2A(node* p, bool b) {
+	if (b == false) {
+		p->p_Rchild->color = true;
+		if (p->p_Lchild->p_Lchild == nullptr && p->p_Lchild->p_Rchild == nullptr) p->p_Lchild = nullptr;
+	}
+	else {
+		p->p_Lchild->color = true;
+		if (p->p_Rchild->p_Lchild == nullptr && p->p_Rchild->p_Rchild == nullptr)p->p_Rchild = nullptr;
+	}
+	if (p->p_parent == nullptr) p->color = false;
+}
+void tree::delete_2B(node* p, bool b) {
+	if (b == false) {
+		p->color = false;
+		p->p_Rchild->color = true;
+		if(p->p_Lchild->p_Lchild==nullptr&&p->p_Lchild->p_Rchild==nullptr) p->p_Lchild = nullptr;
+	}
+	else {
+		p->color = false;
+		p->p_Lchild->color = true;
+		if(p->p_Rchild->p_Lchild==nullptr&&p->p_Rchild->p_Rchild==nullptr) p->p_Rchild = nullptr;
+	}
+}
+void tree::delete_3(node* p, bool b) {
+	if (b == false) {
+		p->p_Rchild->color = false;
+		p->color = true;
+		L_rotate(p);
+		delete_2B(p,b);
+	}
+	else {
+		p->p_Lchild->color = false;
+		p->color = true;
+		R_rotate(p);
+		delete_2B(p, b);
+	}
+}
+void tree::delete_node(int i) {
+	node* current_node = root;
+	while (i != current_node->value) {//定位到结点位置
+		if (i > current_node->value) current_node = current_node->p_Rchild;
+		else if (i < current_node->value) current_node = current_node->p_Lchild;
+		if (current_node == nullptr) break;
+	}
+	if (current_node == nullptr) {
+		cout << "couldn't delete: " << i << ",because there is no such node in the tree " << endl;
+	}
+	else if (current_node->p_parent == nullptr && current_node->p_Lchild == nullptr && current_node->p_Rchild == nullptr) {//删除节点为根节点的情况，无需检查violation
+		root = nullptr;
+	}
+	else if (current_node->p_Lchild == nullptr && current_node->p_Rchild == nullptr && current_node->color == true) {//删除节点为红色叶子结点的情况
+		node* t = current_node->p_parent;
+		if (current_node->is_left_child == true) {
+			current_node->p_parent->p_Lchild = nullptr;
+			current_node->p_parent = nullptr;
+		}
+		if (current_node->is_right_child == true) {
+			current_node->p_parent->p_Rchild = nullptr;
+			current_node->p_parent = nullptr;
+		}//just delete the red leaf node
+	}
+	else if ((current_node->p_Lchild != nullptr && current_node->p_Lchild->color == true && current_node->p_Rchild == nullptr && current_node->p_Lchild->p_Lchild == nullptr && current_node->p_Lchild->p_Rchild == nullptr) || (current_node->p_Rchild != nullptr && current_node->p_Rchild->color == true && current_node->p_Lchild == nullptr && current_node->p_Rchild->p_Lchild == nullptr && current_node->p_Rchild->p_Rchild == nullptr)) {//第二种情况，删除单叶子节点的父母的情况
+		if (current_node->p_Lchild != nullptr && current_node->p_Lchild->color == true && current_node->p_Rchild == nullptr && current_node->p_Lchild->p_Lchild == nullptr && current_node->p_Lchild->p_Rchild == nullptr) {
+			if (current_node->is_left_child == true) {
+				current_node->p_parent->p_Lchild = current_node->p_Lchild;
+			}
+			else if (current_node->is_right_child == true) {
+				current_node->p_Lchild->is_left_child = false;
+				current_node->p_Lchild->is_right_child = true;
+				current_node->p_parent->p_Rchild = current_node->p_Lchild;
+			}
+			current_node->p_Lchild->color = false;
+			current_node->p_parent->p_Lchild = current_node->p_Lchild;
+			current_node->p_Lchild->p_parent = current_node->p_parent;
+			current_node->p_parent = nullptr;
+			current_node->p_Lchild = nullptr;
+		}
+		else {
+			if (current_node->is_left_child == true) {
+				current_node->p_parent->p_Lchild =current_node->p_Rchild;
+				current_node->p_Rchild->is_left_child = true;
+				current_node->p_Rchild->is_right_child = false;
+			}
+			else if (current_node->is_right_child == true) {
+				current_node->p_parent->p_Rchild = current_node->p_Rchild;
+			}
+			current_node->p_Rchild->color = false;
+			current_node->p_Rchild->p_parent = current_node->p_parent;
+			current_node->p_parent = nullptr;
+			current_node->p_Rchild = nullptr;
+
+		}
+
+
+	}
+	else if (current_node->color==false&&current_node->p_Lchild==nullptr&&current_node->p_Rchild==nullptr) {//直接删除黑色叶子节点出现双空的情况
+		node* t = current_node->p_parent;
+		while (current_node != root) {
+			if (current_node->is_left_child == true) {//curr node为左子节点的情况
+				if (t->p_Rchild->color == false && ((t->p_Rchild->p_Rchild != nullptr && t->p_Rchild->p_Rchild->color == true) || (t->p_Rchild->p_Lchild != nullptr && t->p_Rchild->p_Lchild->color == true))) {
+					delete_1(t, false);
+					break;
+				}
+				else if (t->color == false && t->p_Rchild->color == false && ((t->p_Rchild->p_Lchild == nullptr && t->p_Rchild->p_Rchild == nullptr)||(t->p_Rchild->p_Lchild!=nullptr&&t->p_Rchild->p_Rchild!=nullptr&&t->p_Rchild->p_Lchild->color==false&&t->p_Rchild->p_Rchild->color==false))) {//Case 2A need to loop and the 2A also need to clear the link between predecessor and the parent
+					delete_2A(t, false);
+					current_node = t;
+					t = t->p_parent;
+					continue;
+				}
+				else if (t->color == true && t->p_Rchild->color == false && ((t->p_Rchild->p_Lchild == nullptr && t->p_Rchild->p_Rchild == nullptr)|| (t->p_Rchild->p_Lchild != nullptr && t->p_Rchild->p_Rchild != nullptr && t->p_Rchild->p_Lchild->color == false && t->p_Rchild->p_Rchild->color == false))) {//Case 2B
+					delete_2B(t, false);
+					break;
+				}
+				else if (t->p_Rchild->color == true) {//case 3
+					delete_3(t, false);
+					break;
+				}
+
+			}
+			else if (current_node->is_right_child == true) {//curr node为右子节点的情况
+				if (t->p_Lchild->color == false && ((t->p_Lchild->p_Lchild != nullptr && t->p_Lchild->p_Lchild->color == true) || (t->p_Lchild->p_Rchild != nullptr && t->p_Lchild->p_Rchild->color == true))) {
+					delete_1(t, true);
+					break;
+				}
+				else if (t->color == false && t->p_Lchild->color == false && ((t->p_Lchild->p_Lchild == nullptr && t->p_Lchild->p_Rchild == nullptr)||(t->p_Lchild->p_Lchild!=nullptr&&t->p_Lchild->p_Rchild!=nullptr&&t->p_Lchild->p_Lchild->color==false&&t->p_Lchild->p_Rchild->color==false))) {//Case 2A need to loop and the 2A also need to clear the link between predecessor and the parent
+					delete_2A(t, true);
+					current_node = t;
+					t = t->p_parent;
+					continue;
+				}
+				else if (t->color == true && t->p_Lchild->color == false && ((t->p_Lchild->p_Lchild == nullptr && t->p_Lchild->p_Rchild == nullptr) || (t->p_Lchild->p_Lchild != nullptr && t->p_Lchild->p_Rchild != nullptr && t->p_Lchild->p_Lchild->color == false && t->p_Lchild->p_Rchild->color == false))) {//Case 2B
+					delete_2B(t, true);
+					break;
+				}
+				else if (t->p_Lchild->color == true) {//case 3
+					delete_3(t, true);
+					break;
+				}
+
+			}
+		}
+		while (root->p_parent != nullptr) {
+			root = root->p_parent;
+		}
+	}
+	else {  //剩余用predecessor来替代的的情况
+		node* predecessor = nullptr;
+		node* t = nullptr;
+		predecessor = current_node->p_Lchild;//begin to search for the predecessor;
+		while (predecessor->p_Rchild != nullptr) predecessor = predecessor->p_Rchild;//locate the predecessor
+		current_node->value = predecessor->value; //替换值
+		t = predecessor->p_parent;
+		if (predecessor->color == true) {//predecessor是红色叶子节点，直接删
+			if (predecessor->is_left_child == true) {
+				t->p_Lchild = nullptr;
+				predecessor->p_parent = nullptr;
+			}
+			if (predecessor->is_right_child == true) {
+				t->p_Rchild = nullptr;
+				predecessor->p_parent = nullptr;
+			}
+
+
+		}
+		if (predecessor->color == false) {//predecessor是黑色的情况
+			if ((predecessor->p_Lchild != nullptr && predecessor->p_Lchild->color == true && predecessor->p_Rchild == nullptr && predecessor->p_Lchild->p_Lchild == nullptr && predecessor->p_Lchild->p_Rchild == nullptr) || (predecessor->p_Rchild != nullptr && predecessor->p_Rchild->color == true && predecessor->p_Lchild == nullptr && predecessor->p_Rchild->p_Lchild == nullptr && predecessor->p_Rchild->p_Rchild == nullptr)) {//predecessor是黑色节点，trivial case 2情况
+				if (predecessor->p_Lchild != nullptr && predecessor->p_Lchild->color == true && predecessor->p_Rchild == nullptr && predecessor->p_Lchild->p_Lchild == nullptr && predecessor->p_Lchild->p_Rchild == nullptr) {
+					if (predecessor->is_left_child == true) {
+						predecessor->p_parent->p_Lchild = predecessor->p_Lchild;
+					}
+					else if (predecessor->is_right_child==true) {
+						predecessor->p_parent->p_Rchild = predecessor->p_Lchild;
+						predecessor->p_Lchild->is_left_child = false;
+						predecessor->p_Lchild->is_right_child = true;
+					}
+					predecessor->p_Lchild->color = false;
+					predecessor->p_Lchild->p_parent = predecessor->p_parent;
+					predecessor->p_parent = nullptr;
+					predecessor->p_Lchild = nullptr;
+				}
+				else if(predecessor->p_Rchild != nullptr && predecessor->p_Rchild->color == true && predecessor->p_Lchild == nullptr && predecessor->p_Rchild->p_Lchild == nullptr && predecessor->p_Rchild->p_Rchild == nullptr) {
+					if (predecessor->is_left_child == true) {
+						predecessor->p_parent->p_Lchild = predecessor->p_Rchild;
+						predecessor->p_Rchild->is_left_child = true;
+						predecessor->p_Rchild->is_right_child = false;
+					}
+					else if (predecessor->is_right_child == true) {
+						predecessor->p_parent->p_Rchild = predecessor->p_Rchild;
+					}
+					predecessor->p_Rchild->color = false;
+					predecessor->p_Rchild->p_parent = predecessor->p_parent;
+					predecessor->p_parent = nullptr;
+					predecessor->p_Rchild = nullptr;
+
+				}
+			}
+			else {
+				while (predecessor != root) {
+					if (predecessor->is_left_child == true) {//predecessor为左节点的情况
+						if (t->p_Rchild->color == false && ((t->p_Rchild->p_Rchild != nullptr && t->p_Rchild->p_Rchild->color == true) || (t->p_Rchild->p_Lchild != nullptr && t->p_Rchild->p_Lchild->color == true))) {
+							delete_1(t, false);
+							break;
+						}
+						else if (t->color == false && t->p_Rchild->color == false && ((t->p_Rchild->p_Lchild == nullptr && t->p_Rchild->p_Rchild == nullptr) || (t->p_Rchild->p_Lchild != nullptr && t->p_Rchild->p_Rchild != nullptr && t->p_Rchild->p_Lchild->color == false && t->p_Rchild->p_Rchild->color == false))) {//Case 2A need to loop and the 2A also need to clear the link between predecessor and the parent
+							delete_2A(t, false);
+							predecessor = t;
+							t = t->p_parent;
+							continue;
+						}
+						else if (t->color == true && t->p_Rchild->color == false && ((t->p_Rchild->p_Lchild == nullptr && t->p_Rchild->p_Rchild == nullptr) || (t->p_Rchild->p_Lchild != nullptr && t->p_Rchild->p_Rchild != nullptr && t->p_Rchild->p_Lchild->color == false && t->p_Rchild->p_Rchild->color == false))) {//Case 2B
+							delete_2B(t, false);
+							break;
+						}
+						else if (t->p_Rchild->color == true) {//case 3
+							delete_3(t, false);
+							break;
+						}
+
+					}
+					else if (predecessor->is_right_child == true) {//predecessor为右节点的情况
+						if (t->p_Lchild->color == false && ((t->p_Lchild->p_Lchild != nullptr && t->p_Lchild->p_Lchild->color == true) || (t->p_Lchild->p_Rchild != nullptr && t->p_Lchild->p_Rchild->color == true))) {
+							delete_1(t, true);
+							break;
+						}
+						else if (t->color == false && t->p_Lchild->color == false && ((t->p_Lchild->p_Lchild == nullptr && t->p_Lchild->p_Rchild == nullptr) || (t->p_Lchild->p_Lchild != nullptr && t->p_Lchild->p_Rchild != nullptr && t->p_Lchild->p_Lchild->color == false && t->p_Lchild->p_Rchild->color == false))) {//Case 2A need to loop and the 2A also need to clear the link between predecessor and the parent
+							delete_2A(t, true);
+							predecessor = t;
+							t = t->p_parent;
+							continue;
+						}
+						else if (t->color == true && t->p_Lchild->color == false && ((t->p_Lchild->p_Lchild == nullptr && t->p_Lchild->p_Rchild == nullptr) || (t->p_Lchild->p_Lchild != nullptr && t->p_Lchild->p_Rchild != nullptr && t->p_Lchild->p_Lchild->color == false && t->p_Lchild->p_Rchild->color == false))) {//Case 2B
+							delete_2B(t, true);
+							break;
+						}
+						else if (t->p_Lchild->color == true) {//case 3
+							delete_3(t, true);
+							break;
+						}
+
+					}
+				}
+			}
+
+
+
+		}
+		while (root->p_parent != nullptr) {
+			root = root->p_parent;
+		}
+	}
+}

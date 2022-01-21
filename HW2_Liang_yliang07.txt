@@ -1,0 +1,241 @@
+//HW2 by Yichen Liang
+//SU Net ID:yliang07      SUID:455360570
+#include <iostream>
+#include <vector>
+#include <list>
+#include<algorithm>
+#include<list>
+#include<fstream>
+using namespace std;
+
+
+class Node {
+public:
+	int cost = 214748364;  //cost to a node
+	int from = -1;  //the from node to this node
+	bool visited = false;
+	Node(int c, int f, bool v);
+};
+Node::Node(int c, int f, bool v) :cost(c), from(f), visited(v) {}
+
+
+
+class HEAP {
+public:
+	vector<int> heap;
+	void makeheap();
+	void reset();
+	void popheap();
+	void pushheap(int number);
+	void print_heap();
+	int get_top();
+	int get_size();
+};
+void HEAP::makeheap() {
+	int size = heap.size();
+	int index = 0;
+	while (index < size) {
+		if (index != 0) {
+			int parent = (index - 1) / 2;
+			while (heap[parent] > heap[index])
+			{
+				swap(heap[parent], heap[index]);
+				index = parent;
+				parent = (index - 1) / 2;
+			}
+		}
+		index++;
+	}
+
+}
+void HEAP::popheap() {
+	heap.erase(heap.begin());
+	makeheap();
+}
+void HEAP::reset() {
+	heap.clear();
+}
+void HEAP::pushheap(int number) {
+	heap.push_back(number);
+	makeheap();
+}
+void HEAP::print_heap() {
+	for (vector<int>::iterator it = heap.begin(); it != heap.end(); ++it) {
+		cout << *it << " ";
+	}
+	cout << "\n" << endl;
+}
+int HEAP::get_top() {
+	int result = this->heap[0];
+	return result;
+}
+int HEAP::get_size() {
+	int size = heap.size();
+	return size;
+}
+
+
+void ShortestPath(vector<list<pair<int, int>>*>& graph, vector<Node>& table, HEAP& heap) {
+	int start_point = -1;
+	for (int i = 0; i < table.size(); i++) {
+		if (table[i].cost == 0) start_point = i;
+	}
+	int min_cost = 1000;
+	int current = start_point;
+	int temp;
+	table[start_point].visited = true;
+	for (auto iterator = graph[current]->begin(); iterator != graph[current]->end(); iterator++) {
+		table[iterator->first].cost = iterator->second;
+		table[iterator->first].from = current;
+		heap.pushheap(iterator->second);
+		/*heap.print_heap();*/
+	}
+	while (heap.get_size() != 0) {
+
+		min_cost = heap.get_top();
+		heap.popheap();
+		for (int i = 0; i < table.size(); i++) {
+			if (table[i].cost == min_cost && table[i].visited == false) {
+				current = i;
+				table[i].visited = true;
+				break;
+				
+			}
+		}
+		for (auto iterator = graph[current]->begin(); iterator != graph[current]->end(); iterator++) {
+			if (table[iterator->first].visited == false && table[iterator->first].cost > table[current].cost + iterator->second) {
+				table[iterator->first].cost = table[current].cost + iterator->second;
+				table[iterator->first].from = current;
+				heap.pushheap(table[iterator->first].cost);
+			}
+		}
+	}
+
+	cout << "For the shortest paths using Dirjstra's algorithm:" << endl;
+	for (int i = 0; i < table.size(); i++) {
+		temp = i;
+		if (table[i].cost == 214748364) {
+			cout << "cost from " << start_point << " to " << i << " is infinity and no paths exist!" << endl;
+			continue;
+		}
+		cout << "cost from  " << start_point << " to  " << i << " is:  " << table[i].cost;
+		cout << " and the path is: ";
+		if (table[i].from == i) {
+			cout << i << endl;
+		}
+		while (table[temp].from != temp) {
+			cout << temp;
+			temp = table[temp].from;
+			if (temp != start_point) cout << "<-";
+			if (temp == start_point) cout << "<-" << start_point << endl;
+		}
+	}
+}
+
+void MST(vector<list<pair<int, int>>*>& graph, vector<Node>& table, HEAP& heap) {
+	int start_point = 0;
+	int min_cost = 1000;
+	int current = start_point;
+	int temp;
+	table[start_point].visited = true;
+	table[start_point].cost = 0;
+	for (auto iterator = graph[current]->begin(); iterator != graph[current]->end(); iterator++) {
+		table[iterator->first].cost = iterator->second;
+		table[iterator->first].from = current;
+		heap.pushheap(iterator->second);
+		/*heap.print_heap();*/
+	}
+	for (int i = 0; i < table.size(); i++) {
+		for (auto iterator = graph[i]->begin(); iterator != graph[i]->end(); iterator++) {
+			if (iterator->first == current) {
+				table[i].cost = iterator->second;
+				table[i].from = current;
+				heap.pushheap(iterator->second);
+			}
+		}
+	}
+	while (heap.get_size() != 0) {
+		min_cost = heap.get_top();
+		heap.popheap();
+		for (int i = 0; i < table.size(); i++) {
+			if (table[i].cost == min_cost && table[i].visited == false) {
+				current = i;
+				table[i].visited = true;
+				break;
+			}
+		}
+		for (auto iterator = graph[current]->begin(); iterator != graph[current]->end(); iterator++) {
+			if (table[iterator->first].visited == false && table[iterator->first].cost > iterator->second) {
+				table[iterator->first].cost = iterator->second;
+				table[iterator->first].from = current;
+				heap.pushheap(table[iterator->first].cost);
+			}
+		}
+		for (int i = 0; i < table.size(); i++) {
+			for (auto iterator = graph[i]->begin(); iterator != graph[i]->end(); iterator++) {
+				if (iterator->first == current) {
+					if (table[i].visited == false && table[i].cost > iterator->second) {
+						table[i].cost = iterator->second;
+						table[i].from = current;
+						heap.pushheap(iterator->second);
+					}
+
+				}
+			}
+		}
+	}
+
+	cout <<endl<< "For the minimum spanning tree using Prim's algorithm:" << endl;
+	cout << "The selected edges are:" << endl;
+	int sum = 0;
+	for (int i = 0; i < table.size(); i++) {
+		if (table[i].cost != 0) {
+			cout << i << " " << table[i].from << " " << table[i].cost << endl;
+			sum += table[i].cost;
+		}
+	}
+	cout << "The overall cost is " << sum << endl;
+}
+
+
+
+int main() {
+	ifstream graph_txt("graph.txt");
+	int start;
+	int node_number;
+	int edges_number;
+	graph_txt >> start;
+	graph_txt >> node_number;
+	graph_txt >> edges_number;
+	vector<int> temp;
+	int bottle;
+	for (int i = 0; i < edges_number * 3; i++) {
+		graph_txt >> bottle;
+		temp.push_back(bottle);
+	}
+	vector<list<pair<int, int>>*> graph;
+	for (int j = 0; j < node_number; j++) {
+		graph.push_back(new list<pair<int, int>>);
+		for (int i = 0; i < edges_number * 3; i = i + 3) {
+			if (temp[i] == j) {
+				graph[j]->push_back(make_pair(temp[i + 1], temp[i + 2]));
+			}
+		}
+	}
+	vector<Node> table(node_number, Node(214748364, -1, false));
+	table[start].from = start;
+	table[start].cost = 0;
+	HEAP heap; //Declare heap 
+	ShortestPath(graph, table, heap);//HW2A
+	for (int i = 0; i < table.size(); i++) {//reset the table
+		table[i].cost = 214748364;
+		table[i].visited = false;
+		table[i].from = -1;
+	}
+	heap.reset();//reset the heap
+	MST(graph, table, heap);//HW2B
+	return 0;
+
+}
+//source=10 happens a problems
+

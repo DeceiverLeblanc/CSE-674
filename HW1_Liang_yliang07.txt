@@ -1,0 +1,248 @@
+//HW1 by Yichen Liang
+//SU Net ID:yliang07      SUID:455360570
+#include<iostream>
+#include<stack>
+#include<vector>
+#include<queue>
+#include<string>
+#include<algorithm>
+#include<fstream>
+#include"math.h"
+using namespace std;
+
+class Cell {
+public:
+	int wall;
+	int id;
+	bool visited = false;
+	int from = -1;
+	Cell(int id_value, int wall_value);
+};
+Cell::Cell(int id_value,int wall_value) {
+	wall = wall_value;
+	id = id_value;
+
+}
+vector<Cell> maze;
+void DFS_iterative(vector<Cell>& maze, int start, int end) {
+	int size = maze.size();
+	int group = sqrt(size);
+	stack<Cell> s;
+	int current_cell_number = start;
+	maze[current_cell_number].from = -1;
+	s.push(maze[current_cell_number]);
+	while (!s.empty()) {
+		Cell top_cell = s.top();
+		current_cell_number = top_cell.id;
+		s.pop();
+		if (top_cell.id == end) break;
+		if (maze[top_cell.id].visited == false)
+		{
+			maze[top_cell.id].visited = true; //mark the node visited
+			int walls_direction = top_cell.wall;
+			string binary_wall = "";
+			while (walls_direction) {
+				binary_wall += to_string(walls_direction % 2);
+				walls_direction /= 2;
+			}
+			while (binary_wall.length() < 4) {
+				binary_wall += "0";
+			}
+			reverse(binary_wall.begin(), binary_wall.end());//the binary format to see which way has walls  
+			if (binary_wall[2] == '0'&& current_cell_number +1 <= size - 1) {
+				s.push(maze[current_cell_number + 1]);
+				if (maze[current_cell_number + 1].from == -1) maze[current_cell_number + 1].from = current_cell_number;
+			}
+			if (binary_wall[3] == '0'&& current_cell_number + group <= size - 1) {
+				s.push(maze[current_cell_number + group]);
+				if (maze[current_cell_number + group].from == -1) maze[current_cell_number + group].from = current_cell_number;
+			}
+			if (binary_wall[0] == '0' && current_cell_number >= 1) {
+				s.push(maze[current_cell_number - 1]);
+				if (maze[current_cell_number - 1].from == -1) maze[current_cell_number - 1].from = current_cell_number;
+			}
+			if (binary_wall[1] == '0' && current_cell_number >= group) {
+				s.push(maze[current_cell_number - group]);
+				if (maze[current_cell_number - group].from == -1) maze[current_cell_number - group].from = current_cell_number;
+			}
+		}
+
+	}
+	cout << "Using the DFS_iterative:" << endl;
+	maze[start].from = -1; 
+	if (maze[end].from == -1) {
+		cout << "No solution for DFS_iterative" << endl;
+	}
+	while (maze[end].from != -1) {
+		cout << maze[end].id;
+		end = maze[end].from;
+		if (end != start) cout << "<-";
+		if (end == start) cout <<"<-"<< maze[start].id;
+	}
+}
+
+
+
+
+void DFS_recursive(vector<Cell>& maze, int start, int end, bool& done) {
+	int number = maze.size();
+	int group = sqrt(maze.size());
+	if (done==false) {
+		int current_cell_number = start;
+		maze[current_cell_number].visited = true; //mark the node visited
+		if (current_cell_number + 1 <= number-1 && maze[current_cell_number + 1].visited==false) {
+			if (maze[current_cell_number + 1].wall / 8 == 0) {
+				if (maze[current_cell_number + 1].from == -1) {
+					maze[current_cell_number + 1].from = current_cell_number;
+					DFS_recursive(maze, current_cell_number + 1, end, done);
+				}
+			}
+		}
+
+		if (current_cell_number + group <= number-1 && maze[current_cell_number + group].visited==false) {
+			if (maze[current_cell_number + group].wall == 1 || maze[current_cell_number + group].wall == 2 || maze[current_cell_number + group].wall == 3 || maze[current_cell_number + group].wall == 8 || maze[current_cell_number + group].wall == 9 || maze[current_cell_number + group].wall == 10 || maze[current_cell_number + group].wall == 11)
+				if (maze[current_cell_number + group].from == -1) {
+					maze[current_cell_number + group].from = current_cell_number;
+					DFS_recursive(maze, current_cell_number + group, end, done);
+				}
+
+		}
+		if (current_cell_number - 1 >= 0 && maze[current_cell_number - 1].visited==false) {
+			if (maze[current_cell_number - 1].wall == 1 || maze[current_cell_number - 1].wall == 4 || maze[current_cell_number - 1].wall == 5 || maze[current_cell_number - 1].wall == 8 || maze[current_cell_number - 1].wall == 9 || maze[current_cell_number - 1].wall == 12 || maze[current_cell_number - 1].wall == 13) {
+				if (maze[current_cell_number - 1].from == -1)
+				{
+					maze[current_cell_number - 1].from = current_cell_number;
+					DFS_recursive(maze, current_cell_number - 1, end, done);
+				}
+			}
+		}
+		if (current_cell_number - group >= 0 && maze[current_cell_number - group].visited==false) {
+			if (maze[current_cell_number - group].wall % 2 == 0) {
+				if (maze[current_cell_number - group].from == -1)
+				{
+					maze[current_cell_number - group].from = current_cell_number;
+					DFS_recursive(maze, current_cell_number - group, end, done);
+				}
+			}
+		}
+		
+
+		if (maze[end].visited==true) {
+			done = true;
+		}
+		
+		
+		
+	}
+
+	
+	
+
+	if (done==true && start == end) {
+		cout << "Using the DFS_recursive:" << endl;
+		while (maze[end].from != -1) {
+			cout << maze[end].id;
+			end = maze[end].from;
+			if (end != start) cout << "<-";
+		}
+		cout << maze[end].id << endl;
+	}
+	
+
+}
+
+
+
+
+void BFS(vector<Cell>& maze, int start, int end) {
+	int size = maze.size();
+	int group = sqrt(maze.size());
+	queue<Cell> s;
+	int current_cell_number = start;
+	maze[current_cell_number].from = -1;
+	s.push(maze[current_cell_number]);
+	while (!s.empty()) {
+		Cell top_cell = s.front();
+		current_cell_number = top_cell.id;
+		s.pop();
+		if (top_cell.id == end) break;
+		if (maze[top_cell.id].visited == false)
+		{
+			maze[top_cell.id].visited = true; //mark the node visited
+			int walls_direction = top_cell.wall;
+			string binary_wall = "";
+			while (walls_direction) {
+				binary_wall += to_string(walls_direction % 2);
+				walls_direction /= 2;
+			}
+			while (binary_wall.length() < 4) {
+				binary_wall += "0";
+			}
+			reverse(binary_wall.begin(), binary_wall.end());//the binary format to see which way has walls  
+			if (binary_wall[2] == '0'&&current_cell_number+1<=size-1) {
+				s.push(maze[current_cell_number + 1]);
+				if (maze[current_cell_number + 1].from == -1) maze[current_cell_number + 1].from = current_cell_number;
+			}
+			if (binary_wall[3] == '0'&&current_cell_number+group<=size-1) {
+				s.push(maze[current_cell_number + group]);
+				if (maze[current_cell_number + group].from == -1) maze[current_cell_number + group].from = current_cell_number;
+			}
+			if (binary_wall[0] == '0' && current_cell_number >= 1) {
+				s.push(maze[current_cell_number - 1]);
+				if (maze[current_cell_number - 1].from == -1) maze[current_cell_number - 1].from = current_cell_number;
+			}
+			if (binary_wall[1] == '0' && current_cell_number >= group) {
+				s.push(maze[current_cell_number - group]);
+				if (maze[current_cell_number - group].from == -1) maze[current_cell_number - group].from = current_cell_number;
+			}
+		}
+
+	}
+
+	maze[start].from = -1; 
+	cout << "\nUsing the BFS:" << endl;
+	if (maze[end].from == -1) {
+		cout << "No solution for BFS" << endl;
+	}
+	while (maze[end].from != -1) {
+		cout << maze[end].id;
+		end = maze[end].from;
+		if (end != start) cout << "<-";
+		if (end == start) cout << "<-" << maze[start].id;
+	}
+}
+
+int main() {
+	bool done = false;
+	ifstream maze_txt("maze.txt");
+	int start;
+	int end;
+	int number;
+	maze_txt >> number;
+	maze_txt >> start;
+	maze_txt>> end;
+	for (int j = 0; j <number;j++) {
+		int wall_n;
+		maze_txt >> wall_n;
+		maze.push_back(Cell(j, wall_n));
+	}    
+	DFS_recursive(maze, start, end, done);
+	if (done == false) {
+		cout << "Using the DFS_recursive:" << endl;
+		cout << "No solution for DFS_recursive" << endl;
+	}
+	for (int i = 0; i < maze.size(); i++) {  //reset all the nodes, make sure that all node's from and visited are false and -1;
+		maze[i].from = -1;
+		maze[i].visited = false;
+	}
+	DFS_iterative(maze, start,end);
+	for (int i = 0; i < maze.size(); i++) { //reset all the nodes, make sure that all node's from and visited are false and -1;
+		maze[i].from = -1;
+		maze[i].visited = false;
+	}
+	BFS(maze, start, end);
+	return 0;
+}
+
+
+

@@ -1,0 +1,256 @@
+//HW4 by Yichen Liang
+//SU Net ID:yliang07      SUID:455360570
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <list>
+#include <queue>
+#include<algorithm>
+
+using namespace std;
+class node {
+public:
+	int id;
+	bool visited;
+	bool inQueue;
+	int from;
+	int from_weight;
+	node() :id{ -1 }, visited{ false }, inQueue{ false }, from{ -1 }, from_weight{ -1 }{}
+};
+void BipartiteMatching(vector<list<pair<int, int>>*>& G, vector<node>& T, int s, int t);//Graph, Table, source, sink
+void maxFlow(vector<list<pair<int, int>>*>& G, vector<node>& T, int s, int t);//Graph, Table, source, Sink
+int BFS(vector<list<pair<int, int>>*>& G, vector<node>& T, int s, int t);
+//Return the flow on the path found by BFS or 0 if not path found
+int main() {
+	vector<list<pair<int, int>>*> Graph1;
+	ifstream graph_txt("graph1.txt");
+	int source;
+	int sink;
+	int node_numbers;
+	int edge_numbers;
+	graph_txt >> source;
+	graph_txt >> sink;
+	graph_txt >> node_numbers;
+	graph_txt >> edge_numbers;
+	vector<node> Table1(node_numbers, node());
+	vector<int> temp;
+	int bottle;
+	for (int i = 0; i < edge_numbers * 3; i++) {
+		graph_txt >> bottle;
+		temp.push_back(bottle);
+	}
+	for (int j = 0; j < node_numbers; j++) {
+		Graph1.push_back(new list<pair<int, int>>);
+		for (int i = 0; i < edge_numbers * 3; i = i + 3) {
+			if (temp[i] == j) {
+				Graph1[j]->push_back(make_pair(temp[i + 1], temp[i + 2]));
+			}
+		}
+	}//Read in graph from graph1.txt
+	vector<pair<int, int>> sort_g1;
+	for (int i = 0; i < Graph1.size(); i++) {
+		sort_g1.clear();
+		for (auto itr = Graph1[i]->begin(); itr != Graph1[i]->end(); itr++) {
+			sort_g1.push_back(*itr);
+		}
+		sort(sort_g1.begin(), sort_g1.end());
+		Graph1[i]->clear();
+		for (int j = 0; j < sort_g1.size(); j++) {
+			Graph1[i]->push_back(sort_g1[j]);
+		}
+	}
+	for (int i = 0; i < node_numbers; i++) {
+		Table1[i].id = i;
+	}//Data initialization
+	maxFlow(Graph1, Table1, source, sink);
+
+
+	ifstream graph2_txt("graph2.txt");
+	int Nodes;
+	int Edges;
+	int Left;
+	int Right;
+	graph2_txt >> Nodes;
+	graph2_txt >> Edges;
+	graph2_txt >> Left;
+	graph2_txt >> Right;
+	vector<list<pair<int, int>>*> Graph2;
+	vector<node> Table2(Nodes + 2);
+	vector<int> temp2;
+	int bottle2;
+	for (int i = 0; i < Edges * 2; i++) {
+		graph2_txt >> bottle2;
+		temp2.push_back(bottle2);
+	}
+	for (int j = 0; j < Nodes + 2; j++) {
+		Graph2.push_back(new list<pair<int, int>>);
+		for (int i = 0; i < Edges * 2; i = i + 2) {
+			if (temp2[i] == j) {
+				Graph2[j]->push_back(make_pair(temp2[i + 1], 1));
+			}
+		}
+	}//Read in graph from graph2.txt
+	for (int i = 0; i < Left; i++) {
+		Graph2[Nodes]->push_back(make_pair(i, 1));
+	}
+	for (int i = Left; i < Nodes; i++) {
+		Graph2[i]->push_back(make_pair(Nodes + 1, 1));
+	}
+	for (int i = 0; i < Nodes + 2; i++) {
+		Table2[i].id = i;
+	}
+	//Data initailization
+	vector<pair<int, int>> sort_g2;
+	for (int i = 0; i < Graph2.size(); i++) {
+		sort_g2.clear();
+		for (auto itr = Graph2[i]->begin(); itr != Graph2[i]->end(); itr++) {
+			sort_g2.push_back(*itr);
+		}
+		sort(sort_g2.begin(), sort_g2.end());
+		Graph2[i]->clear();
+		for (int j = 0; j < sort_g2.size(); j++) {
+			Graph2[i]->push_back(sort_g2[j]);
+		}
+	}
+
+	BipartiteMatching(Graph2, Table2, Nodes, Nodes + 1);
+
+	return 0;
+}
+
+void maxFlow(vector<list<pair<int, int>>*>& G, vector<node>& T, int s, int t) {
+	vector<list<pair<int, int>>*> bottle;
+	for (int i = 0; i < G.size(); i++) {
+		bottle.push_back(new list<pair<int, int>>);
+		for (auto itr = G[i]->begin(); itr != G[i]->end(); itr++) {
+			bottle[i]->push_back(*itr);
+		}
+	}
+	int flow = BFS(G, T, s, t);
+	int max_flow = 0;
+	while (flow != 0) {
+		int current_node = t;
+		max_flow += flow;
+		while (current_node != s && T[current_node].from_weight >= flow) {
+			bool need_create = true;
+			for (auto iterator = G[T[current_node].from]->begin(); iterator != G[T[current_node].from]->end(); iterator++) {
+				if (iterator->first == current_node && iterator->second > 0) {
+					iterator->second -= flow;
+
+				}
+			}
+			for (auto iterator = G[current_node]->begin(); iterator != G[current_node]->end(); iterator++) {
+				if (iterator->first == T[current_node].from) {
+					iterator->second += flow;
+					need_create = false;
+
+				}
+			}
+			if (need_create == true) {
+				G[current_node]->push_back(make_pair(T[current_node].from, flow));
+			}
+			current_node = T[current_node].from;
+		}
+		flow = BFS(G, T, s, t);
+	}
+	cout << "The maximum flow = " << max_flow << endl;
+	cout << "The following edges have scheduled flow as indicated:" << endl;
+
+
+	for (int i = 0; i < G.size(); i++) {
+		for (auto iterator = G[i]->begin(); iterator != G[i]->end(); iterator++) {
+			for (auto iterator2 = bottle[i]->begin(); iterator2 != bottle[i]->end(); iterator2++) {
+				if (iterator2->first == iterator->first && (iterator2->second - iterator->second) > 0) {
+					cout << "The scheduled flow on edge " << "(" << i << "," << iterator2->first << ") = " << iterator2->second - iterator->second << "  out of capacity = " << iterator2->second << endl;
+
+				}
+			}
+		}
+	}
+
+
+}
+
+int BFS(vector<list<pair<int, int>>*>& G, vector<node>& T, int s, int t) {
+	for (int i = 0; i < T.size(); i++) {
+		T[i].visited = false;
+		T[i].from = -1;
+		T[i].from_weight = -1;
+		T[i].inQueue = false;
+	}
+	queue<node> Q;
+	Q.push(T[s]);
+	int top_node = -1;
+	T[s].from = s;
+	T[s].inQueue = true;
+	while (!Q.empty()) {
+		node current = Q.front();
+		top_node = current.id;
+		Q.pop();
+		if (T[t].inQueue==true) break;
+		if (T[top_node].visited == false) {
+			T[top_node].visited = true;
+			for (auto iterator = G[top_node]->begin(); iterator != G[top_node]->end(); iterator++) {
+				if ((iterator->second) > 0 && T[iterator->first].visited == false&&T[iterator->first].inQueue==false) {
+					T[iterator->first].inQueue = true;
+					T[iterator->first].from_weight = iterator->second;
+					T[iterator->first].from = top_node;
+					Q.push(T[iterator->first]);
+				}
+			}
+		}
+	}
+	int flow = T[t].from_weight;
+	int current = t;
+	if (flow == -1) return 0;
+	while (current != s) {
+		if (T[current].from_weight <= flow) {
+			flow = T[current].from_weight;
+		}
+		current = T[current].from;
+	}
+	return flow;
+}
+void BipartiteMatching(vector<list<pair<int, int>>*>& G, vector<node>& T, int s, int t) {
+	int flow = BFS(G, T, s, t);
+	int o; int p; int L; int R;
+	ifstream xx("graph2.txt");
+	xx >> o >> p >> L >> R;
+	int max_flow = 0;
+	while (flow != 0) {
+		int current_node = t;
+		max_flow += flow;
+		while (current_node != s && T[current_node].from_weight >= flow) {
+			bool need_create = true;
+			for (auto iterator = G[T[current_node].from]->begin(); iterator != G[T[current_node].from]->end(); iterator++) {
+				if (iterator->first == current_node && iterator->second > 0) {
+					iterator->second -= flow;
+				}
+			}
+			for (auto iterator = G[current_node]->begin(); iterator != G[current_node]->end(); iterator++) {
+				if (iterator->first == T[current_node].from) {
+					iterator->second += flow;
+					need_create = false;
+				}
+			}
+			if (need_create == true) {
+				G[current_node]->push_back(make_pair(T[current_node].from, flow));
+			}
+			current_node = T[current_node].from;
+		}
+		flow = BFS(G, T, s, t);
+
+	}
+	cout << endl;
+	cout << "The maximum matchings = " << max_flow << endl;
+	cout << "The following matchings are selected:" << endl;
+	for (int i = 0; i < L; i++) {
+		for (auto itr = G[i]->begin(); itr != G[i]->end(); itr++) {
+			if (itr->second == 0 && itr->first != G.size() - 1) {
+				cout << "(" << i << "," << itr->first << ")" << endl;
+			}
+		}
+
+	}
+
+}

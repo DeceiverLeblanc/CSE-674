@@ -1,0 +1,656 @@
+//HW5 by Yichen Liang
+//SU Net ID:yliang07      SUID:455360570
+#include <iostream> 
+#include<stack>
+#include <algorithm> 
+
+using namespace std;
+
+class node {
+public:
+	int value;
+	int height;
+	node* parent;
+	node* l_child;
+	node* r_child;
+	bool is_left_child;
+	bool is_right_child; 
+	node() {}
+	node(int i) { value = i; height = 1; parent = l_child = r_child = nullptr; is_left_child = is_right_child = false; }
+};
+
+class avl_tree {
+public:
+	node* root;
+	avl_tree() {
+		root = nullptr;
+	}
+
+	void add_node(int i);
+	void delete_node(int i);
+	void in_order_traversal(node* p);
+	pair<node*, int> height_update(node* p);
+	void L_Rotate(node* p);
+	void R_Rotate(node* p);
+};
+
+
+int main() {
+	avl_tree t1;
+	t1.add_node(41);
+	t1.add_node(20);
+	t1.add_node(11);
+	t1.add_node(29);
+	t1.add_node(32);
+	t1.add_node(50);
+	t1.add_node(65);
+	t1.add_node(72);
+	t1.add_node(91);
+	t1.add_node(99);
+	t1.add_node(2);
+	t1.add_node(5);
+	t1.add_node(33);
+	t1.add_node(21);
+	t1.add_node(7);
+	t1.add_node(48);
+	t1.add_node(1);
+	t1.add_node(15);
+	t1.add_node(18);
+	t1.add_node(45);
+	t1.add_node(51);
+	t1.add_node(46);
+	t1.add_node(30);
+	t1.add_node(34);
+	t1.add_node(48);
+	t1.add_node(21);
+	t1.add_node(13);
+	t1.add_node(32);
+	t1.add_node(88);
+	t1.add_node(1);
+	t1.add_node(7);
+	t1.add_node(49);
+	t1.in_order_traversal(t1.root);
+	return 0;
+}
+
+
+
+void avl_tree::L_Rotate(node* p) {
+	if (p->r_child->l_child == nullptr && p->parent != nullptr) {
+		if (p->is_right_child == true) {
+			p->parent->r_child = p->r_child;  
+		}
+		if (p->is_left_child == true) {
+			p->parent->l_child = p->r_child;
+		}
+		if (p->is_right_child == true) {
+			p->r_child->is_right_child = true;
+			p->r_child->is_left_child = false;
+		}
+		if (p->is_left_child == true) {
+			p->r_child->is_left_child = true;
+			p->r_child->is_right_child = false;
+		}
+		p->r_child->parent = p->parent; 
+		p->r_child->l_child = p;
+		p->parent = p->r_child;
+		p->is_left_child = true;
+		p->is_right_child = false;
+		p->r_child = nullptr;
+		height_update(p);
+		height_update(p->parent);
+	}
+	else if (p->r_child->l_child != nullptr && p->parent != nullptr) {
+		node temp(1);
+		node* bottle = &temp;
+		if (p->is_right_child == true) p->parent->r_child = p->r_child;  
+		if (p->is_left_child == true) p->parent->l_child = p->r_child;
+		if (p->is_right_child == true) {
+			p->r_child->is_right_child = true;
+			p->r_child->is_left_child = false;
+		}
+		if (p->is_left_child == true) {
+			p->r_child->is_left_child = true;
+			p->r_child->is_right_child = false;
+		}
+		p->r_child->parent = p->parent; 
+		p->parent = p->r_child;
+		bottle->r_child = p->r_child->l_child;
+		p->r_child->l_child = p;
+		p->r_child = bottle->r_child;
+		p->r_child->is_right_child = true;
+		p->r_child->is_left_child = false;
+		p->r_child->parent = p;
+		p->is_left_child = true;
+		p->is_right_child = false;
+		height_update(p);
+		height_update(p->parent);
+	}
+
+	else if (p->parent == nullptr && p->r_child->l_child == nullptr) {
+		p->r_child->is_left_child = false;
+		p->r_child->is_right_child = false;
+		p->r_child->parent = nullptr;
+		p->r_child->l_child = p;
+		p->parent = p->r_child;
+		p->is_left_child = true;
+		p->is_right_child=false;
+		p->r_child = nullptr;
+		height_update(p);
+		height_update(p->parent);
+	}
+	else if (p->parent == nullptr && p->r_child->l_child != nullptr) {
+		node temp(1);
+		node* bottle = &temp;
+		p->r_child->parent = nullptr;
+		p->r_child->is_left_child = false;
+		p->r_child->is_right_child = false;
+		bottle->r_child = p->r_child->l_child;
+		p->r_child->l_child = p;
+		p->parent = p->r_child;
+		p->r_child = bottle->r_child;
+		p->r_child->is_left_child = false;
+		p->r_child->is_right_child = true;
+		p->r_child->parent = p;
+		p->is_left_child = true;
+		p->is_right_child = false;
+		height_update(p);
+		height_update(p->parent);
+	}
+}
+
+void avl_tree::R_Rotate(node* p) {
+	if ( p->l_child->r_child == nullptr&&p->parent!=nullptr) {
+		if (p->is_right_child == true) {
+			p->parent->r_child = p->l_child;  
+		}
+		if (p->is_left_child == true) {
+			p->parent->l_child = p->l_child;
+		}
+		if (p->is_right_child == true) {
+			p->l_child->is_right_child = true;
+			p->l_child->is_left_child = false;
+		}
+		if (p->is_left_child==true){
+			p->l_child->is_left_child = true;
+			p->l_child->is_right_child = false;
+		}
+		p->l_child->parent = p->parent; 
+		p->l_child->r_child = p;
+		p->parent = p->l_child;
+		p->is_left_child = false;
+		p->is_right_child = true;
+		p->l_child = nullptr;
+		height_update(p);
+		height_update(p->parent);
+	}
+	else if (p->l_child->r_child != nullptr&& p->parent != nullptr) {
+		node temp(1);
+		node* bottle = &temp;
+		if(p->is_right_child==true) p->parent->r_child = p->l_child;  
+		if(p->is_left_child==true) p->parent->l_child = p->l_child;
+
+		if (p->is_right_child == true) {
+			p->l_child->is_right_child = true;
+			p->l_child->is_left_child = false;
+		}
+		if (p->is_left_child == true) {
+			p->l_child->is_left_child = true;
+			p->l_child->is_right_child = false;
+		}
+
+		p->l_child->parent = p->parent; 
+		p->parent = p->l_child;
+		bottle->r_child = p->l_child->r_child;
+		p->l_child->r_child = p;
+		p->l_child = bottle->r_child;
+		p->l_child->is_left_child = true;
+		p->l_child->is_right_child = false;
+		p->l_child->parent = p;
+		p->is_left_child = false;
+		p->is_right_child = true;
+		height_update(p);
+		height_update(p->parent);
+	}
+
+	else if (p->parent == nullptr && p->l_child->r_child == nullptr) {
+		p->l_child->is_left_child = false;
+		p->l_child->is_right_child = false;
+		p->l_child->parent = nullptr;
+		p->l_child->r_child = p;
+		p->parent = p->l_child;
+		p->is_right_child = true;
+		p->is_left_child = false;
+		p->l_child = nullptr;
+		height_update(p);
+		height_update(p->parent);
+	}
+	else if (p->parent == nullptr && p->l_child->r_child != nullptr) {
+		node temp(1);
+		node* bottle = &temp;
+		p->l_child->parent = nullptr;
+		p->l_child->is_left_child = false;
+		p->l_child->is_right_child = false;
+		bottle->r_child = p->l_child->r_child;
+		p->l_child->r_child = p;
+		p->parent = p->l_child;
+		p->l_child = bottle->r_child;
+		p->l_child->is_left_child = true;
+		p->l_child->is_right_child = false;
+		p->l_child->parent = p;
+		p->is_left_child = false;
+		p->is_right_child = true;
+		height_update(p);
+		height_update(p->parent);
+	}
+}
+
+pair<node*, int> avl_tree::height_update(node* p) {
+	if (p->l_child != nullptr && p->r_child != nullptr) {
+		p->height = max(p->l_child->height, p->r_child->height) + 1;
+	}
+	else if (p->l_child == nullptr && p->r_child != nullptr) {
+		p->height = p->r_child->height + 1;
+	}
+	else if (p->l_child != nullptr && p->r_child == nullptr) {
+		p->height = p->l_child->height + 1;
+	}
+	else p->height = 1;
+
+	if (p->l_child == nullptr && p->r_child == nullptr) return make_pair(nullptr, 0);
+	else if (p->l_child != nullptr && p->r_child == nullptr) {
+		if (p->l_child->l_child != nullptr && p->l_child->r_child == nullptr) {
+			return make_pair(p, 1);
+		}
+		else if (p->l_child->r_child != nullptr && p->l_child->l_child == nullptr) {
+			return make_pair(p, 2);
+		}
+		else if (p->l_child->l_child == nullptr && p->l_child->r_child == nullptr) {
+			return make_pair(nullptr, 0);
+		}
+		else if (p->l_child->l_child->height >= p->l_child->r_child->height) {
+			return make_pair(p, 1);
+		}
+		else return make_pair(p, 2);
+	}
+	else if (p->l_child == nullptr && p->r_child != nullptr) {
+		if (p->r_child->l_child != nullptr && p->r_child->r_child == nullptr) {
+			return make_pair(p, 4);
+		}
+		else if (p->r_child->r_child != nullptr && p->r_child->l_child == nullptr) {
+			return make_pair(p, 3);
+		}
+		else if (p->r_child->l_child == nullptr && p->r_child->r_child == nullptr) {
+			return make_pair(nullptr, 0);
+		}
+		else if (p->r_child->l_child->height >= p->r_child->r_child->height) {
+			return make_pair(p, 4);
+		}
+		else return make_pair(p, 3);
+	}
+	else if (p->l_child->height - p->r_child->height > 1) {
+		if (p->l_child->l_child != nullptr && p->l_child->r_child == nullptr) {
+			return make_pair(p, 1);
+		}
+		else if (p->l_child->r_child != nullptr && p->l_child->l_child == nullptr) {
+			return make_pair(p, 2);
+		}
+		else if (p->l_child->l_child == nullptr && p->l_child->r_child == nullptr) {
+			return make_pair(nullptr, 0);
+		}
+		else if (p->l_child->l_child->height >= p->l_child->r_child->height) {
+			return make_pair(p, 1);
+		}
+		else return make_pair(p, 2);
+	}
+	else if (p->r_child->height - p->l_child->height > 1) {
+		if (p->r_child->l_child != nullptr && p->r_child->r_child == nullptr) {
+			return make_pair(p, 4);
+		}
+		else if (p->r_child->r_child != nullptr && p->r_child->l_child == nullptr) {
+			return make_pair(p, 3);
+		}
+		else if (p->r_child->l_child == nullptr && p->r_child->r_child == nullptr) {
+			return make_pair(nullptr, 0);
+		}
+		else if (p->r_child->l_child->height >= p->r_child->r_child->height) {
+			return make_pair(p, 4);
+		}
+		else return make_pair(p, 3);
+	}
+	else return make_pair(nullptr, 0);
+	
+
+	
+}
+
+void avl_tree::in_order_traversal(node* p) {
+	stack<node*> s;
+	while (p != nullptr || !s.empty()) {
+		while (p != nullptr) {
+			s.push(p);
+			p = p->l_child;
+		}
+		if (!s.empty()) {
+			p = s.top();
+			cout << "(" << p->value << "," << p->height << ")" << endl;
+			s.pop();
+			p = p->r_child;
+		}
+
+	}
+
+}
+
+void avl_tree::add_node(int i) {
+	node* new_node = new node(i);
+	if (root == nullptr) {
+		root = new_node;
+		pair<node*, int> temp=height_update(root);
+	}
+	else  {
+		if (root->l_child == nullptr && i < root->value) {
+			root->l_child = new_node;
+			new_node->parent = root;
+			new_node->is_left_child = true;
+			new_node->is_right_child = false;
+			pair<node*, int>temp1=height_update(new_node->parent);
+			if (temp1.second == 1) {//LL
+				R_Rotate(new_node->parent);
+			}
+			if (temp1.second == 2) {//LR
+				L_Rotate(new_node->parent->l_child);
+				R_Rotate(new_node->parent);
+			}
+			if (temp1.second == 3) {//RR
+				L_Rotate(new_node->parent);
+			}
+			if (temp1.second == 4) {//RL
+				R_Rotate(new_node->parent->r_child);
+				L_Rotate(new_node->parent);
+			}
+          
+		}
+		else if (root->r_child == nullptr && i > root->value) {//连接到根节点右边的情况
+			root->r_child = new_node;
+			new_node->parent = root;
+			new_node->is_left_child = false;
+			new_node->is_right_child = true;
+			pair<node*, int>temp2 = height_update(new_node->parent);//根据得到的情况进行变换
+			if (temp2.second == 1) {//LL情况，貌似不需要考虑,Right为刚连接的点
+				R_Rotate(new_node->parent);
+			}
+			if (temp2.second == 2) {//LR
+				L_Rotate(new_node->parent->l_child);
+				R_Rotate(new_node->parent);
+			}
+			if (temp2.second == 3) {//RR
+				L_Rotate(new_node->parent);
+			}
+			if (temp2.second == 4) {//RL
+				R_Rotate(new_node->parent->r_child);
+				L_Rotate(new_node->parent);
+			}
+
+		}
+
+		else{//都有子节点的情况
+			node* bottle = root;
+			node* tool = nullptr;
+			while (bottle!=nullptr) {
+				if (i >=bottle->value) {
+					tool = bottle;
+					bottle = bottle->r_child;
+				}
+				else if (i < bottle->value) {
+					tool = bottle;
+					bottle = bottle->l_child;
+				}
+			}
+			new_node->parent = tool;
+			if (i >= tool->value) {
+				new_node->is_right_child = true;
+				new_node->is_left_child = false;
+				tool->r_child = new_node;
+			}
+			if (i < tool->value) {
+				new_node->is_right_child = false;
+				new_node->is_left_child = true;
+				tool->l_child = new_node;
+			}
+			//连接完成，开始处理异常
+			node* t = new_node;
+			while (t->parent!= nullptr) {
+				pair<node*, int>temp3 = height_update(t->parent);
+				if (temp3.second == 1) {//LL
+					R_Rotate(t->parent);
+					break;
+				}
+				else if (temp3.second == 2) {//LR
+					L_Rotate(t->parent->l_child);
+					R_Rotate(t->parent->parent);
+					break;
+				}
+				else if (temp3.second == 3) {//RR
+					L_Rotate(t->parent);
+					break;
+				}
+				else if (temp3.second == 4) {//RL
+					R_Rotate(t->parent->r_child);
+					L_Rotate(t->parent->parent);
+					break;
+				}
+				else t = t->parent;
+			}
+
+		}
+	}
+	while (root->parent != nullptr) {
+		root = root->parent;
+	}
+}
+void avl_tree::delete_node(int i) {
+	node* current_node = root;
+	while (i != current_node->value) {//定位到结点位置
+		if (i > current_node->value) current_node = current_node->r_child;
+		else if (i < current_node->value) current_node = current_node->l_child;
+		if (current_node == nullptr) break;
+	}
+	if (current_node == nullptr) {
+		cout << "couldn't delete: "<<i<<",because there is no such node in the tree "<< endl;
+	}
+	else if (current_node->parent == nullptr&&current_node->l_child==nullptr&&current_node->r_child==nullptr) {//删除节点为根节点的情况，无需检查violation
+		root = nullptr;
+	}
+	else if (current_node->l_child == nullptr && current_node->r_child == nullptr) {//删除节点为叶子结点的情况
+		node* t = current_node->parent;
+		if (current_node->is_left_child == true) {
+			current_node->parent->l_child = nullptr;
+			current_node->parent = nullptr;
+		}
+		if (current_node->is_right_child == true) {
+			current_node->parent->r_child = nullptr;
+			current_node->parent = nullptr;
+		}//删除完毕，检查violation
+		while (t!= nullptr) {
+			pair<node*, int>temp4 = height_update(t);
+			if (temp4.second == 1) {//LL
+				R_Rotate(t);
+				
+			}
+			else if (temp4.second == 2) {//LR
+				L_Rotate(t->l_child);
+				R_Rotate(t);
+				
+			}
+			else if (temp4.second == 3) {//RR
+				L_Rotate(t);
+				
+			}
+			else if (temp4.second == 4) {//RL
+				R_Rotate(t->r_child);
+				L_Rotate(t);
+				
+			}
+			 t = t->parent;
+		}
+
+	}
+	else if ((current_node->l_child!=nullptr&&current_node->l_child->height==1)|| (current_node->r_child != nullptr && current_node->r_child->height == 1)) {//第二种情况，删除叶子节点的父母的情况
+		node* t = nullptr;
+		if (current_node->l_child!=nullptr&&current_node->l_child->height == 1) {
+			t = current_node->l_child;
+			if (current_node->is_right_child == true) {
+				current_node->l_child->is_left_child = false;
+				current_node->l_child->is_right_child = true;
+				current_node->parent->r_child = current_node->l_child;
+				current_node->l_child->r_child = current_node->r_child;
+				if (current_node->r_child != nullptr) { current_node->r_child->parent = current_node->l_child; }
+				current_node->l_child->parent = current_node->parent;
+			}
+			else if (current_node->is_left_child == true) {
+				current_node->l_child->is_left_child = true;
+				current_node->l_child->is_right_child = false;
+				current_node->parent->l_child = current_node->l_child;
+				current_node->l_child->r_child = current_node->r_child;
+				if (current_node->r_child != nullptr) { current_node->r_child->parent = current_node->l_child; }
+				current_node->l_child->parent = current_node->parent;
+			}
+		}
+		else if (current_node->r_child != nullptr && current_node->r_child->height == 1) {
+			t = current_node->r_child;
+			if (current_node->is_right_child == true) {
+				current_node->r_child->is_left_child = false;
+				current_node->r_child->is_right_child = true;
+				current_node->parent->r_child = current_node->r_child;
+				current_node->r_child->l_child = current_node->l_child;
+				if (current_node->l_child != nullptr) { current_node->l_child->parent = current_node->r_child; }
+				current_node->r_child->parent = current_node->parent;
+			}
+			else if (current_node->is_left_child == true) {
+				current_node->r_child->is_left_child = true;
+				current_node->r_child->is_right_child = false;
+				current_node->parent->l_child = current_node->r_child;
+				current_node->r_child->l_child = current_node->l_child;
+				if (current_node->l_child != nullptr) { current_node->l_child->parent = current_node->r_child; }
+				current_node->r_child->parent = current_node->parent;
+			}
+		}
+		//完成连接，检查violation并进行变换和调整
+		while (t!= nullptr) {
+			pair<node*, int>temp5 = height_update(t);
+			if (temp5.second == 1) {//LL
+				R_Rotate(t);
+				
+			}
+			else if (temp5.second == 2) {//LR
+				L_Rotate(t->l_child);
+				R_Rotate(t);
+				
+			}
+			else if (temp5.second == 3) {//RR
+				L_Rotate(t);
+				
+			}
+			else if (temp5.second == 4) {//RL
+				R_Rotate(t->r_child);
+				L_Rotate(t);
+				
+			}
+			 t = t->parent;
+		}
+
+	}
+	else {  //剩余用predecessor来替代的的情况
+		node* predecessor = nullptr;
+		node* t = nullptr;
+		predecessor = current_node->l_child;//begin to search for the predecessor;
+		while (predecessor->r_child != nullptr) predecessor = predecessor->r_child;//locate the predecessor
+		if (predecessor->is_left_child == true&&current_node->parent==nullptr) {
+			t = predecessor->parent;
+			predecessor->parent->l_child = predecessor->l_child;
+			predecessor->l_child->parent = predecessor->parent;
+			current_node->value = predecessor->value;//更新位置
+			while (t != nullptr) {
+				pair<node*, int>temp6 = height_update(t);
+				if (temp6.second == 1) {//LL
+					R_Rotate(t);
+					
+				}
+				else if (temp6.second == 2) {//LR
+					L_Rotate(t->l_child);
+					R_Rotate(t);
+					
+				}
+				else if (temp6.second == 3) {//RR
+					L_Rotate(t);
+				
+				}
+				else if (temp6.second == 4) {//RL
+					R_Rotate(t->r_child);
+					L_Rotate(t);
+				
+				}
+				 t = t->parent;
+			}
+		}
+		else if (predecessor->is_right_child&&predecessor->l_child==nullptr){
+			t = predecessor->parent;
+			current_node->value = predecessor->value;
+			predecessor->parent->r_child = nullptr;
+			predecessor->parent = nullptr;
+			while (t != nullptr) {
+				pair<node*, int>temp7 = height_update(t);
+				if (temp7.second == 1) {//LL
+					R_Rotate(t);
+					
+				}
+				else if (temp7.second == 2) {//LR
+					L_Rotate(t->l_child);
+					R_Rotate(t);
+					
+				}
+				else if (temp7.second == 3) {//RR
+					L_Rotate(t);
+					
+				}
+				else if (temp7.second == 4) {//RL
+					R_Rotate(t->r_child);
+					L_Rotate(t);
+					
+				}
+				 t = t->parent;
+			}
+		}
+		else if (predecessor->is_right_child==true&&predecessor->l_child!=nullptr) {
+			t = predecessor->parent;
+			current_node->value = predecessor->value;
+			predecessor->parent->r_child = predecessor->l_child;
+			predecessor->l_child->parent = predecessor->parent;
+			predecessor->l_child->is_left_child = false;
+			predecessor->l_child->is_right_child = true;
+			while (t != nullptr) {
+				pair<node*, int>temp8 = height_update(t);
+				if (temp8.second == 1) {//LL
+					R_Rotate(t);
+				}
+				else if (temp8.second == 2) {//LR
+					L_Rotate(t->l_child);
+					R_Rotate(t);
+				}
+				else if (temp8.second == 3) {//RR
+					L_Rotate(t);
+				}
+				else if (temp8.second == 4) {//RL
+					R_Rotate(t->r_child);
+					L_Rotate(t);
+				}
+				 t = t->parent;
+			}
+		}
+	}
+	while (root->parent != nullptr) {
+		root = root->parent;
+	}
+}
+
